@@ -7,4 +7,7 @@ namespace BackgroundJobs.Core;
 public class DomainException(string code, string message) : Exception(message)
 {
     public string Code { get; } = code;
+
+    /// <summary>Extra facts returned with the problem response, such as the id of an existing run.</summary>
+    public IDictionary<string, object?> Details { get; } = new Dictionary<string, object?>(StringComparer.Ordinal);
 }
