@@ -4,6 +4,7 @@ using System.Text.Unicode;
 using BackgroundJobs.Api.Common;
 using BackgroundJobs.Api.Features.Audit;
 using BackgroundJobs.Api.Features.Auth;
+using BackgroundJobs.Api.Features.Imports;
 using BackgroundJobs.Api.Features.Jobs;
 using BackgroundJobs.Api.Features.Users;
 using BackgroundJobs.Api.Logging;
@@ -85,6 +86,7 @@ app.MapGet("/", () => Results.Redirect("/scalar")).ExcludeFromDescription();
 app.MapAuthEndpoints();
 app.MapUserEndpoints();
 app.MapJobEndpoints();
+app.MapImportEndpoints();
 app.MapAuditEndpoints();
 
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });

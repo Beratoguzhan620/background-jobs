@@ -1,11 +1,17 @@
 using System.Security.Cryptography;
+using BackgroundJobs.Infrastructure.Hangfire;
+using Hangfire;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.PostgreSql;
 
 namespace BackgroundJobs.IntegrationTests;
 
-/// <summary>Boots the real API against a throwaway PostgreSQL container shared by the whole collection.</summary>
+/// <summary>
+/// Boots the real API against a throwaway PostgreSQL container shared by the whole collection, with a
+/// Hangfire server in the same process so enqueued jobs really run.
+/// </summary>
 public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     public const string AdminEmail = "admin@example.com";
@@ -16,6 +22,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     public string ConnectionString => _database.GetConnectionString();
 
+    public string StorageRoot { get; } = Path.Combine(Path.GetTempPath(), $"background-jobs-tests-{Guid.NewGuid():N}");
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
@@ -25,6 +33,14 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Bootstrap:AdminEmail", AdminEmail);
         builder.UseSetting("Bootstrap:AdminPassword", AdminPassword);
         builder.UseSetting("Hangfire:QueuePollInterval", "00:00:00.200");
+        builder.UseSetting("Storage:Root", StorageRoot);
+        builder.ConfigureServices(services => services.AddHangfireServer(options =>
+        {
+            options.ServerName = "test-server";
+            options.Queues = JobQueues.All;
+            options.WorkerCount = 4;
+            options.SchedulePollingInterval = TimeSpan.FromMilliseconds(500);
+        }));
     }
 
     public async Task InitializeAsync()
@@ -37,6 +53,10 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     {
         await base.DisposeAsync();
         await _database.DisposeAsync();
+        if (Directory.Exists(StorageRoot))
+        {
+            Directory.Delete(StorageRoot, recursive: true);
+        }
     }
 }
 

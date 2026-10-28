@@ -1,4 +1,6 @@
+using BackgroundJobs.Infrastructure.Files;
 using BackgroundJobs.Infrastructure.Hangfire;
+using BackgroundJobs.Infrastructure.Jobs;
 using BackgroundJobs.Infrastructure.Persistence;
 using Hangfire;
 using Hangfire.PostgreSql;
@@ -20,6 +22,10 @@ public static class DependencyInjection
             .AddInterceptors(provider.GetServices<IInterceptor>()));
 
         services.Configure<JobsHangfireOptions>(configuration.GetSection(JobsHangfireOptions.Section));
+        services.Configure<StorageOptions>(configuration.GetSection(StorageOptions.Section));
+        services.AddSingleton<FileStore>();
+        services.AddScoped<JobRunner>();
+        services.AddScoped<ImportJob>();
         var hangfire = configuration.GetSection(JobsHangfireOptions.Section).Get<JobsHangfireOptions>() ?? new JobsHangfireOptions();
 
         services.AddHangfire(config =>

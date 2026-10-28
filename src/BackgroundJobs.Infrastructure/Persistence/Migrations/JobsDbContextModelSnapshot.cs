@@ -77,6 +77,132 @@ namespace BackgroundJobs.Infrastructure.Persistence.Migrations
                     b.ToTable("audit_log", (string)null);
                 });
 
+            modelBuilder.Entity("BackgroundJobs.Core.Imports.ImportFile", b =>
+                {
+                    b.Property<Guid>("JobRunId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_run_id");
+
+                    b.Property<string>("ErrorFilePath")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("error_file_path");
+
+                    b.Property<string>("OriginalName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("original_name");
+
+                    b.Property<int>("RowsDuplicate")
+                        .HasColumnType("integer")
+                        .HasColumnName("rows_duplicate");
+
+                    b.Property<int>("RowsImported")
+                        .HasColumnType("integer")
+                        .HasColumnName("rows_imported");
+
+                    b.Property<int>("RowsRead")
+                        .HasColumnType("integer")
+                        .HasColumnName("rows_read");
+
+                    b.Property<int>("RowsRejected")
+                        .HasColumnType("integer")
+                        .HasColumnName("rows_rejected");
+
+                    b.Property<string>("Sha256")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .HasColumnName("sha256")
+                        .IsFixedLength();
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("bigint")
+                        .HasColumnName("size_bytes");
+
+                    b.Property<string>("StoredPath")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("stored_path");
+
+                    b.Property<DateTimeOffset>("UploadedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("uploaded_at");
+
+                    b.HasKey("JobRunId")
+                        .HasName("pk_import_files");
+
+                    b.HasIndex("UploadedAt")
+                        .HasDatabaseName("ix_import_files_uploaded_at");
+
+                    b.ToTable("import_files", (string)null);
+                });
+
+            modelBuilder.Entity("BackgroundJobs.Core.Imports.Order", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("CustomerEmail")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)")
+                        .HasColumnName("customer_email");
+
+                    b.Property<Guid>("ImportFileId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("import_file_id");
+
+                    b.Property<string>("OrderNo")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("order_no");
+
+                    b.Property<DateTimeOffset>("OrderedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ordered_at");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer")
+                        .HasColumnName("quantity");
+
+                    b.Property<string>("Sku")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("sku");
+
+                    b.Property<long>("UnitPriceMinor")
+                        .HasColumnType("bigint")
+                        .HasColumnName("unit_price_minor");
+
+                    b.HasKey("Id")
+                        .HasName("pk_orders");
+
+                    b.HasIndex("ImportFileId")
+                        .HasDatabaseName("ix_orders_import_file_id");
+
+                    b.HasIndex("OrderNo")
+                        .IsUnique()
+                        .HasDatabaseName("ix_orders_order_no");
+
+                    b.HasIndex("OrderedAt")
+                        .HasDatabaseName("ix_orders_ordered_at");
+
+                    b.ToTable("orders", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_orders_price_positive", "unit_price_minor > 0");
+
+                            t.HasCheckConstraint("ck_orders_quantity_positive", "quantity > 0");
+                        });
+                });
+
             modelBuilder.Entity("BackgroundJobs.Core.Jobs.JobRun", b =>
                 {
                     b.Property<Guid>("Id")
@@ -222,6 +348,26 @@ namespace BackgroundJobs.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_users_email");
 
                     b.ToTable("users", (string)null);
+                });
+
+            modelBuilder.Entity("BackgroundJobs.Core.Imports.ImportFile", b =>
+                {
+                    b.HasOne("BackgroundJobs.Core.Jobs.JobRun", null)
+                        .WithOne()
+                        .HasForeignKey("BackgroundJobs.Core.Imports.ImportFile", "JobRunId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_import_files_job_runs_job_run_id");
+                });
+
+            modelBuilder.Entity("BackgroundJobs.Core.Imports.Order", b =>
+                {
+                    b.HasOne("BackgroundJobs.Core.Imports.ImportFile", null)
+                        .WithMany()
+                        .HasForeignKey("ImportFileId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_orders_import_files_import_file_id");
                 });
 
             modelBuilder.Entity("BackgroundJobs.Core.Jobs.JobRun", b =>

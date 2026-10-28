@@ -35,6 +35,14 @@ internal sealed class DomainExceptionHandler(IProblemDetailsService problemDetai
             Extensions = { ["code"] = code },
         };
 
+        if (exception is DomainException { Details.Count: > 0 } withDetails)
+        {
+            foreach (var (key, value) in withDetails.Details)
+            {
+                problem.Extensions[key] = value;
+            }
+        }
+
 
         return await problemDetails.TryWriteAsync(new ProblemDetailsContext
         {
