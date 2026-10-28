@@ -26,6 +26,8 @@ public static class DependencyInjection
         services.AddSingleton<FileStore>();
         services.AddScoped<JobRunner>();
         services.AddScoped<ImportJob>();
+        services.AddScoped<ReportJob>();
+        services.AddScoped<RecurringJobs>();
         var hangfire = configuration.GetSection(JobsHangfireOptions.Section).Get<JobsHangfireOptions>() ?? new JobsHangfireOptions();
 
         services.AddHangfire(config =>
@@ -48,7 +50,7 @@ public static class DependencyInjection
             config.UseFilter(new AutomaticRetryAttribute
             {
                 Attempts = hangfire.RetryAttempts,
-                DelaysInSeconds = hangfire.RetryDelaysInSeconds,
+                DelaysInSeconds = hangfire.EffectiveRetryDelays,
                 OnAttemptsExceeded = AttemptsExceededAction.Fail,
             });
         });
