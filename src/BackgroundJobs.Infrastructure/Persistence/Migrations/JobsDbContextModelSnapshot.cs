@@ -279,6 +279,12 @@ namespace BackgroundJobs.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(16)")
                         .HasColumnName("status");
 
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.HasKey("Id")
                         .HasName("pk_job_runs");
 
@@ -304,6 +310,38 @@ namespace BackgroundJobs.Infrastructure.Persistence.Migrations
                         {
                             t.HasCheckConstraint("ck_job_runs_progress_range", "progress BETWEEN 0 AND 100");
                         });
+                });
+
+            modelBuilder.Entity("BackgroundJobs.Core.Reports.Report", b =>
+                {
+                    b.Property<Guid>("JobRunId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_run_id");
+
+                    b.Property<DateOnly>("From")
+                        .HasColumnType("date")
+                        .HasColumnName("from");
+
+                    b.Property<bool>("Nightly")
+                        .HasColumnType("boolean")
+                        .HasColumnName("nightly");
+
+                    b.Property<string>("StoredPath")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("stored_path");
+
+                    b.Property<DateOnly>("To")
+                        .HasColumnType("date")
+                        .HasColumnName("to");
+
+                    b.HasKey("JobRunId")
+                        .HasName("pk_reports");
+
+                    b.HasIndex("From", "To")
+                        .HasDatabaseName("ix_reports_from_to");
+
+                    b.ToTable("reports", (string)null);
                 });
 
             modelBuilder.Entity("BackgroundJobs.Core.Users.User", b =>
@@ -377,6 +415,16 @@ namespace BackgroundJobs.Infrastructure.Persistence.Migrations
                         .HasForeignKey("RequestedBy")
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_job_runs_users_requested_by");
+                });
+
+            modelBuilder.Entity("BackgroundJobs.Core.Reports.Report", b =>
+                {
+                    b.HasOne("BackgroundJobs.Core.Jobs.JobRun", null)
+                        .WithOne()
+                        .HasForeignKey("BackgroundJobs.Core.Reports.Report", "JobRunId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_reports_job_runs_job_run_id");
                 });
 #pragma warning restore 612, 618
         }
