@@ -1,0 +1,8 @@
+{
+  "name": "background-jobs-e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dashboard": "node dashboard.mjs"
+  }
+}

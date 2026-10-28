@@ -4,6 +4,7 @@ using System.Text.Unicode;
 using BackgroundJobs.Api.Common;
 using BackgroundJobs.Api.Features.Audit;
 using BackgroundJobs.Api.Features.Auth;
+using BackgroundJobs.Api.Features.Dashboard;
 using BackgroundJobs.Api.Features.Imports;
 using BackgroundJobs.Api.Features.Jobs;
 using BackgroundJobs.Api.Features.Reports;
@@ -12,6 +13,7 @@ using BackgroundJobs.Api.Logging;
 using BackgroundJobs.Infrastructure;
 using BackgroundJobs.Infrastructure.Hangfire;
 using BackgroundJobs.Infrastructure.Persistence;
+using Hangfire;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
@@ -47,6 +49,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 });
 
 builder.Services.AddJobsAuth(builder.Configuration);
+builder.Services.AddDashboardAuth();
 
 builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = context =>
     context.ProblemDetails.Extensions["traceId"] = context.HttpContext.TraceIdentifier);
@@ -67,7 +70,10 @@ app.UseSerilogRequestLogging();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseAuthentication();
+app.UseWhen(context => context.Request.Path.StartsWithSegments(DashboardAuth.Path),
+    dashboard => dashboard.UseMiddleware<DashboardAuditMiddleware>());
 app.UseAuthorization();
+app.UseAntiforgery();
 
 app.MapOpenApi();
 app.MapScalarApiReference(options => options
@@ -86,10 +92,18 @@ app.MapGet("/", () => Results.Redirect("/scalar")).ExcludeFromDescription();
 
 app.MapAuthEndpoints();
 app.MapUserEndpoints();
-app.MapJobEndpoints();
+app.MapJobEndpoints().MapJobStats();
 app.MapImportEndpoints();
 app.MapReportEndpoints();
 app.MapAuditEndpoints();
+app.MapSignInPage();
+app.MapHangfireDashboard(DashboardAuth.Path, new DashboardOptions
+{
+    DashboardTitle = "Background Jobs",
+    AppPath = "/scalar",
+    Authorization = [new DashboardAdminFilter()],
+    DisplayStorageConnectionString = false,
+}).RequireAuthorization(DashboardAuth.Policy);
 
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });
