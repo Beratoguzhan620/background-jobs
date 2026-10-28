@@ -94,8 +94,8 @@ internal static class ImportEndpoints
 
             await JobRequests.SaveOrRefuseDuplicateAsync(db, run, ct);
 
-            run.AttachHangfireJob(jobs.Enqueue<ImportJob>(job => job.RunAsync(run.Id, CancellationToken.None)));
-            await db.SaveChangesAsync(ct);
+            var hangfireId = jobs.Enqueue<ImportJob>(job => job.RunAsync(run.Id, CancellationToken.None));
+            await JobRequests.AttachHangfireJobAsync(db, run.Id, hangfireId, ct);
 
             return TypedResults.Accepted($"/api/jobs/{run.Id}", ImportResponse.From(run, import));
         }

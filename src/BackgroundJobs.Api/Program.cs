@@ -6,6 +6,7 @@ using BackgroundJobs.Api.Features.Audit;
 using BackgroundJobs.Api.Features.Auth;
 using BackgroundJobs.Api.Features.Imports;
 using BackgroundJobs.Api.Features.Jobs;
+using BackgroundJobs.Api.Features.Reports;
 using BackgroundJobs.Api.Features.Users;
 using BackgroundJobs.Api.Logging;
 using BackgroundJobs.Infrastructure;
@@ -87,6 +88,7 @@ app.MapAuthEndpoints();
 app.MapUserEndpoints();
 app.MapJobEndpoints();
 app.MapImportEndpoints();
+app.MapReportEndpoints();
 app.MapAuditEndpoints();
 
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });

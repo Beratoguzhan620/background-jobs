@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using BackgroundJobs.Core;
+using Microsoft.EntityFrameworkCore;
 
 namespace BackgroundJobs.Api.Common;
 
@@ -16,6 +17,7 @@ internal sealed class DomainExceptionHandler(IProblemDetailsService problemDetai
         var (code, detail) = exception switch
         {
             DomainException domain => (domain.Code, domain.Message),
+            DbUpdateConcurrencyException => (ErrorCodes.ConcurrentUpdate, "The run changed while you were acting on it. Read it again and retry."),
             _ => (null, null),
         };
 

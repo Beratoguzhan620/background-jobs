@@ -1,5 +1,6 @@
 using BackgroundJobs.Infrastructure;
 using BackgroundJobs.Infrastructure.Hangfire;
+using BackgroundJobs.Infrastructure.Jobs;
 using BackgroundJobs.Infrastructure.Persistence;
 using BackgroundJobs.Worker;
 using Hangfire;
@@ -38,6 +39,14 @@ builder.Services.AddHealthChecks()
     .AddCheck<HangfireStorageHealthCheck>("job-storage", tags: ["ready"]);
 
 var app = builder.Build();
+
+// Every worker registers the schedules; AddOrUpdate is idempotent and Hangfire fires each occurrence once.
+var schedules = app.Services.GetRequiredService<IRecurringJobManager>();
+var istanbul = TimeZoneInfo.FindSystemTimeZoneById(ReportJob.TimeZone);
+schedules.AddOrUpdate<RecurringJobs>(RecurringJobs.NightlyReportId, jobs => jobs.NightlyReportAsync(CancellationToken.None),
+    "15 2 * * *", new RecurringJobOptions { TimeZone = istanbul });
+schedules.AddOrUpdate<RecurringJobs>(RecurringJobs.CleanupId, jobs => jobs.CleanupAsync(CancellationToken.None),
+    Cron.Hourly(5), new RecurringJobOptions { TimeZone = istanbul });
 
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });
