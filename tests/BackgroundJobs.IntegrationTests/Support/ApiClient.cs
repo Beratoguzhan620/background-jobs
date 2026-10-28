@@ -64,3 +64,10 @@ public static class ApiClient
         return doc.RootElement.TryGetProperty("code", out var code) ? code.GetString() : null;
     }
 }
+
+public sealed record QueueStatsDto(string Name, long Length);
+
+public sealed record ServerStatsDto(string Name, int Workers, List<string> Queues, DateTime? Heartbeat);
+
+public sealed record JobStatsDto(Dictionary<string, int> RunsByStatus, long Enqueued, long Scheduled, long Processing, long Failed,
+    List<QueueStatsDto> Queues, List<ServerStatsDto> Servers);
