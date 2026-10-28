@@ -1,0 +1,69 @@
+# One command: docker compose up --build
+# API reference: http://localhost:8080/scalar · Dashboard: http://localhost:8080/hangfire
+# Sign in with ADMIN_EMAIL / ADMIN_PASSWORD (local defaults below; override them in .env).
+name: background-jobs
+
+x-database: &database "Host=db;Database=background_jobs;Username=jobs;Password=${POSTGRES_PASSWORD:-jobs-local}"
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: background_jobs
+      POSTGRES_USER: jobs
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-jobs-local}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jobs -d background_jobs"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      args:
+        PROJECT: BackgroundJobs.Api
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Jobs: *database
+      Database__MigrateOnStartup: "true"
+      Bootstrap__AdminEmail: ${ADMIN_EMAIL:-admin@example.com}
+      Bootstrap__AdminPassword: ${ADMIN_PASSWORD:-admin-password-local}
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:-}
+      Jwt__AllowEphemeralKey: "true"
+      Storage__Root: /data
+      TZ: Europe/Istanbul
+    ports:
+      - "8080:8080"
+    volumes:
+      - files:/data
+
+  # Two Hangfire servers sharing one queue, to show that work is spread and never done twice.
+  worker:
+    build:
+      context: .
+      args:
+        PROJECT: BackgroundJobs.Worker
+    restart: on-failure
+    deploy:
+      replicas: 2
+    depends_on:
+      api:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Jobs: *database
+      Storage__Root: /data
+      TZ: Europe/Istanbul
+    volumes:
+      - files:/data
+
+volumes:
+  db-data:
+  files:
