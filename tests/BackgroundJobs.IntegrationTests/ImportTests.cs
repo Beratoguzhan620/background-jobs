@@ -132,9 +132,9 @@ public class ImportTests(ApiFactory factory)
     public async Task A_run_delivered_to_two_workers_at_once_is_done_once()
     {
         // A queued run that Hangfire does not know about, so only the two calls below can pick it up.
-        var runId = await QueueImportWithoutHangfireAsync(Imports.OrderCsv(1_200));
+        var runId = await factory.QueueImportWithoutHangfireAsync(Imports.OrderCsv(1_200));
 
-        await Task.WhenAll(RunImportAsync(runId), RunImportAsync(runId));
+        await Task.WhenAll(factory.RunImportAsync(runId), factory.RunImportAsync(runId));
 
         await using var scope = factory.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsDbContext>();
@@ -142,27 +142,5 @@ public class ImportTests(ApiFactory factory)
         Assert.Equal(JobStatus.Succeeded, run.Status);
         Assert.Equal(1, run.Attempts);
         Assert.Equal(1_200, await db.Orders.CountAsync(o => o.ImportFileId == runId));
-    }
-
-    private async Task RunImportAsync(Guid runId)
-    {
-        await using var scope = factory.Services.CreateAsyncScope();
-        await scope.ServiceProvider.GetRequiredService<ImportJob>().RunAsync(runId, CancellationToken.None);
-    }
-
-    private async Task<Guid> QueueImportWithoutHangfireAsync(string csv)
-    {
-        await using var scope = factory.Services.CreateAsyncScope();
-        var services = scope.ServiceProvider;
-        var files = services.GetRequiredService<BackgroundJobs.Infrastructure.Files.FileStore>();
-        var db = services.GetRequiredService<JobsDbContext>();
-
-        await using var content = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(csv));
-        var stored = await files.SaveAsync(content, "uploads", ".csv", long.MaxValue, CancellationToken.None);
-        var run = JobRun.Create(JobKind.Import, null, $"import:{stored.Sha256}", DateTimeOffset.UtcNow);
-        db.JobRuns.Add(run);
-        db.ImportFiles.Add(ImportFile.Create(run.Id, "direct.csv", stored.Path, stored.Size, stored.Sha256, DateTimeOffset.UtcNow));
-        await db.SaveChangesAsync();
-        return run.Id;
     }
 }

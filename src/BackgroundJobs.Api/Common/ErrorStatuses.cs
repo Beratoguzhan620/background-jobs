@@ -14,6 +14,7 @@ internal static class ErrorStatuses
         [ErrorCodes.EmailTaken] = StatusCodes.Status409Conflict,
         [ErrorCodes.InvalidState] = StatusCodes.Status409Conflict,
         [ErrorCodes.DuplicateJob] = StatusCodes.Status409Conflict,
+        [ErrorCodes.ConcurrentUpdate] = StatusCodes.Status409Conflict,
     };
 
     public static int StatusFor(string code) =>

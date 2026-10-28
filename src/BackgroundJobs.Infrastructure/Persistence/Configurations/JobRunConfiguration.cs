@@ -23,6 +23,7 @@ internal sealed class JobRunConfiguration : IEntityTypeConfiguration<JobRun>
         builder.Property(r => r.Error).HasMaxLength(JobRun.ErrorMaxLength);
         builder.Property(r => r.Result).HasColumnType("jsonb");
         builder.Ignore(r => r.IsActive);
+        builder.Property(r => r.Version).IsRowVersion();
 
         // The same work may not be queued, running or done twice; failed and cancelled runs don't count.
         builder.HasIndex(r => r.DedupKey)

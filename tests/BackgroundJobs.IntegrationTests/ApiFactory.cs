@@ -34,6 +34,11 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Bootstrap:AdminPassword", AdminPassword);
         builder.UseSetting("Hangfire:QueuePollInterval", "00:00:00.200");
         builder.UseSetting("Storage:Root", StorageRoot);
+        // Fast retries so failure paths finish within a test.
+        builder.UseSetting("Hangfire:RetryAttempts", "2");
+        builder.UseSetting("Hangfire:RetryDelaysInSeconds:0", "1");
+        builder.UseSetting("Hangfire:RetryDelaysInSeconds:1", "1");
+        builder.UseSetting("Hangfire:RetryDelaysInSeconds:2", "1");
         builder.ConfigureServices(services => services.AddHangfireServer(options =>
         {
             options.ServerName = "test-server";

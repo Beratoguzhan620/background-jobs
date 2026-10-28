@@ -1,6 +1,7 @@
 using BackgroundJobs.Core.Audit;
 using BackgroundJobs.Core.Imports;
 using BackgroundJobs.Core.Jobs;
+using BackgroundJobs.Core.Reports;
 using BackgroundJobs.Core.Users;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,6 +18,8 @@ public sealed class JobsDbContext(DbContextOptions<JobsDbContext> options) : DbC
     public DbSet<ImportFile> ImportFiles => Set<ImportFile>();
 
     public DbSet<Order> Orders => Set<Order>();
+
+    public DbSet<Report> Reports => Set<Report>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

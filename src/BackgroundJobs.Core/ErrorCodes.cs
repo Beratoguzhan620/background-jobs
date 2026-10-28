@@ -10,4 +10,5 @@ public static class ErrorCodes
     public const string InvalidState = "invalid_state";
     public const string DuplicateJob = "duplicate_job";
     public const string InvalidFile = "invalid_file";
+    public const string ConcurrentUpdate = "concurrent_update";
 }

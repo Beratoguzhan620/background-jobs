@@ -3,9 +3,9 @@ using BackgroundJobs.Core.Jobs;
 using BackgroundJobs.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace BackgroundJobs.Api.Features.Jobs;
+namespace BackgroundJobs.Infrastructure.Jobs;
 
-internal static class JobRequests
+public static class JobRequests
 {
     private const string DedupIndex = "ux_job_runs_dedup_key_active";
 
@@ -34,4 +34,11 @@ internal static class JobRequests
             };
         }
     }
+
+    /// <summary>
+    /// Stores the Hangfire job id on the run without a concurrency check: a worker may already have
+    /// claimed the run (and changed its row) in the moment between enqueueing and this update.
+    /// </summary>
+    public static Task AttachHangfireJobAsync(JobsDbContext db, Guid runId, string hangfireJobId, CancellationToken ct) =>
+        db.JobRuns.Where(r => r.Id == runId).ExecuteUpdateAsync(set => set.SetProperty(r => r.HangfireJobId, hangfireJobId), ct);
 }

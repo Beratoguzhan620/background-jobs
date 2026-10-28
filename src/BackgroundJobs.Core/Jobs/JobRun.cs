@@ -52,6 +52,9 @@ public sealed class JobRun
     /// <summary>JSON summary of the outcome, shaped by the kind of job.</summary>
     public string? Result { get; private set; }
 
+    /// <summary>Concurrency token (PostgreSQL xmin): an admin's cancel cannot silently overwrite a worker's update.</summary>
+    public uint Version { get; private set; }
+
     public static JobRun Create(JobKind kind, Guid? requestedBy, string? dedupKey, DateTimeOffset now, DateTimeOffset? scheduledFor = null) => new()
     {
         Id = Guid.CreateVersion7(now),
@@ -62,8 +65,6 @@ public sealed class JobRun
         CreatedAt = now,
         ScheduledFor = scheduledFor,
     };
-
-    public void AttachHangfireJob(string hangfireJobId) => HangfireJobId = hangfireJobId;
 
     public bool IsActive => Status is JobStatus.Queued or JobStatus.Running or JobStatus.Retrying;
 
@@ -88,6 +89,7 @@ public sealed class JobRun
 
         Status = JobStatus.Queued;
         Progress = 0;
+        Attempts = 0;
         Error = null;
         FinishedAt = null;
         HeartbeatAt = null;
