@@ -37,8 +37,8 @@ Hangfire keeps its own tables in the `hangfire` schema.
 ## Architecture
 
 ```
-src/BackgroundJobs.Core            Entities, job logic (import, report, cleanup), CSV parsing, JobRunner
-src/BackgroundJobs.Infrastructure  EF Core + Npgsql, migrations, file storage, Hangfire configuration
+src/BackgroundJobs.Core            Entities and rules, CSV reading, the order file format
+src/BackgroundJobs.Infrastructure  EF Core + Npgsql, migrations, file storage, Hangfire setup, JobRunner and the jobs
 src/BackgroundJobs.Api             REST API (JWT), dashboard (cookie sign-in, Admin role), enqueues jobs
 src/BackgroundJobs.Worker          Hangfire server; runs the jobs. Compose starts two of them.
 tests/BackgroundJobs.UnitTests
@@ -65,6 +65,8 @@ tests/BackgroundJobs.IntegrationTests  Real PostgreSQL in Testcontainers and in-
   accounts and roles, so every action in the audit trail has a name.
 
 ## Stages
+
+All five stages are done.
 
 | # | Branch | Content |
 |---|---|---|
