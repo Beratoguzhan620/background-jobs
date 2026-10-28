@@ -67,3 +67,40 @@ jobs:
       - name: Stop the stack
         if: always()
         run: docker compose down --volumes
+
+  dashboard:
+    name: Dashboard end-to-end
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Start the stack
+        run: docker compose up --build --detach --wait --wait-timeout 300
+
+      - name: Install Playwright
+        working-directory: tests/e2e
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Run the flow
+        working-directory: tests/e2e
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:8080/health/ready > /dev/null; then break; fi
+            sleep 2
+          done
+          node dashboard.mjs
+
+      - name: Show logs
+        if: failure()
+        run: docker compose logs --no-color
+
+      - name: Stop the stack
+        if: always()
+        run: docker compose down --volumes
