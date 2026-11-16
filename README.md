@@ -14,6 +14,8 @@ The background work of a small shop's back office — large order imports, sales
 
 ## Try it
 
+**Live demo:** [background-jobs-demo.onrender.com/scalar](https://background-jobs-demo.onrender.com/scalar). Sign in with `POST /api/auth/login` as `admin@background-jobs.demo` / `demo-admin-password` (published on purpose), then upload [`docs/sample-orders.csv`](docs/sample-orders.csv). The Hangfire dashboard is at `/hangfire`. Uploads are limited to 2 MB there. It runs on a free server with the database on Neon: after a quiet spell the first visit can take about a minute.
+
 ```bash
 docker compose up --build
 ```
