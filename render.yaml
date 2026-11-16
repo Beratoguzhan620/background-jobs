@@ -1,0 +1,35 @@
+# The public demo on Render's free plan: one web service from deploy/demo/Dockerfile (the API and one worker), with
+# the database on Neon. Render asks for the connection string once; nothing secret is in here.
+services:
+  - type: web
+    name: background-jobs-demo
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./deploy/demo/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health/ready
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: ConnectionStrings__Jobs
+        sync: false
+      - key: Database__MigrateOnStartup
+        value: "true"
+      # The demo's admin sign-in is published in the README on purpose, so visitors can start imports and reports.
+      - key: Bootstrap__AdminEmail
+        value: admin@background-jobs.demo
+      - key: Bootstrap__AdminPassword
+        value: demo-admin-password
+      - key: Jwt__SigningKey
+        generateValue: true
+      # A small free database: uploads are limited to 2 MB, and files live in /tmp until the service sleeps.
+      - key: Imports__MaxFileBytes
+        value: "2097152"
+      - key: Storage__Root
+        value: /tmp/data
+      - key: TZ
+        value: Europe/Istanbul
+      - key: ASPNETCORE_FORWARDEDHEADERS_ENABLED
+        value: "true"
+      - key: PORT
+        value: "8080"

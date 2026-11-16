@@ -28,7 +28,7 @@ builder.Services.AddSerilog((services, logger) => logger
     .ReadFrom.Services(services)
     .Enrich.FromLogContext());
 
-var connectionString = builder.Configuration.GetConnectionString("Jobs");
+var connectionString = ConnectionStrings.FromUrl(builder.Configuration.GetConnectionString("Jobs"));
 if (string.IsNullOrWhiteSpace(connectionString))
 {
     throw new InvalidOperationException(

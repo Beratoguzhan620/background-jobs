@@ -57,8 +57,10 @@ internal static class ImportEndpoints
 
     private static async Task<Results<Accepted<ImportResponse>, ValidationProblem>> Upload(
         IFormFile? file, ClaimsPrincipal user, JobsDbContext db, FileStore files, IBackgroundJobClient jobs, AuditTrail audit,
-        TimeProvider clock, CancellationToken ct)
+        TimeProvider clock, IConfiguration configuration, CancellationToken ct)
     {
+        // A public demo on a small free database lowers the limit; everywhere else it is the documented 50 MB.
+        var maxBytes = Math.Min(configuration.GetValue("Imports:MaxFileBytes", MaxFileBytes), MaxFileBytes);
         var validation = new Validation()
             .Require(file is { Length: > 0 }, "file", "Attach a non-empty CSV file in the 'file' field.")
             .Require(file is null || Path.GetExtension(file.FileName).Equals(".csv", StringComparison.OrdinalIgnoreCase),
@@ -73,7 +75,7 @@ internal static class ImportEndpoints
         {
             try
             {
-                stored = await files.SaveAsync(upload, "uploads", ".csv", MaxFileBytes, ct);
+                stored = await files.SaveAsync(upload, "uploads", ".csv", maxBytes, ct);
             }
             catch (FileTooLargeException ex)
             {
