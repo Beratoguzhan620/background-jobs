@@ -14,6 +14,8 @@ Küçük bir mağazanın arka ofisindeki arka plan işleri (büyük sipariş dos
 
 ## Deneme
 
+**Canlı demo:** [background-jobs-demo.onrender.com/scalar](https://background-jobs-demo.onrender.com/scalar). `POST /api/auth/login` ile `admin@background-jobs.demo` / `demo-admin-password` olarak giriş yap (bilerek herkese açık), sonra [`docs/sample-orders.csv`](docs/sample-orders.csv) dosyasını yükle. Hangfire paneli `/hangfire` adresinde. Orada yüklemeler en fazla 2 MB. Ücretsiz bir sunucuda, veritabanı Neon'da çalışıyor: bir süre kimse açmadıysa ilk açılış bir dakika kadar sürebilir.
+
 ```bash
 docker compose up --build
 ```
